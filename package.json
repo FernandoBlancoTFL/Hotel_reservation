@@ -1,0 +1,21 @@
+{
+  "name": "hotel_reservation",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "domain",
+    "apps/backend"
+  ],
+  "scripts": {
+    "test": "yarn workspaces run test",
+    "build": "yarn workspaces run build"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.3.0"
+  }
+}
