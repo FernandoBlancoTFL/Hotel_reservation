@@ -27,3 +27,27 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+
+# Testing
+coverage/
+
+# Storybook
+storybook-static/
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS
+.DS_Store
