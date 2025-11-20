@@ -1,0 +1,34 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY tsconfig*.json* ./
+COPY package*.json ./
+COPY domain/package*.json ./domain/
+COPY domain/tsconfig*.json* ./domain/
+COPY apps/backend/package*.json ./apps/backend/
+COPY apps/backend/tsconfig*.json* ./apps/backend/
+
+RUN npm install
+
+COPY domain ./domain
+COPY apps/backend ./apps/backend
+
+# Construir domain
+WORKDIR /app/domain
+RUN npm run build
+
+# Construir backend (ahora con fix-imports.js)
+WORKDIR /app/apps/backend
+RUN npm run build
+
+# Debug: ver qué se generó
+RUN echo "=== Checking compiled file ===" && \
+    head -20 dist/infrastructure/repositories/PostgresUserRepository.js
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+CMD ["node", "apps/backend/dist/index.js"]

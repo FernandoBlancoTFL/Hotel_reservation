@@ -10,6 +10,10 @@ export interface InputProps {
   required?: boolean;
   disabled?: boolean;
   name?: string;
+  // Nuevas propiedades para inputs numéricos y de fecha
+  min?: string;
+  max?: string;
+  step?: string;
 }
 
 export const Input = ({
@@ -22,6 +26,9 @@ export const Input = ({
   required = false,
   disabled = false,
   name,
+  min,
+  max,
+  step,
 }: InputProps) => {
   return (
     <div className="input-wrapper">
@@ -38,6 +45,9 @@ export const Input = ({
         placeholder={placeholder}
         disabled={disabled}
         name={name}
+        min={min}
+        max={max}
+        step={step}
         className={`input ${error ? 'input--error' : ''}`}
       />
       {error && <span className="input-error-message">{error}</span>}

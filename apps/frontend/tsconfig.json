@@ -5,24 +5,31 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "types": ["vite/client"],
+
+    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+
+    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+
+    /* Path aliases - AGREGAR ESTAS LÍNEAS */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@presentation/*": ["./src/presentation/*"],
       "@domain/*": ["./src/domain/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
-      "@presentation/*": ["./src/presentation/*"]
+      "@infrastructure/*": ["./src/infrastructure/*"]
     }
   },
   "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["node_modules", "**/*.test.tsx", "**/*.test.ts", "**/*.stories.tsx", "src/test"]
 }

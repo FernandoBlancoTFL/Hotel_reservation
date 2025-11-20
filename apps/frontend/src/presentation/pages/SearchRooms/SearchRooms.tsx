@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Room } from '@domain/entities/Room';
+import { Room, RoomType } from '@domain/entities/Room';
 import { RoomRepositoryImpl } from '@infrastructure/repositories/RoomRepositoryImpl';
 import { SearchRoomsUseCase } from '@domain/usecases/rooms/SearchRoomsUseCase';
 import { Input } from '@presentation/components/Input/Input';
@@ -15,7 +14,7 @@ export const SearchRooms = () => {
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [roomType, setRoomType] = useState('');
+  const [roomType, setRoomType] = useState<string>('');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,7 +35,8 @@ export const SearchRooms = () => {
         checkInDate,
         checkOutDate,
         capacity: capacity ? parseInt(capacity) : undefined,
-        roomType: roomType || undefined,
+        // Cast explícito del tipo cuando roomType no está vacío
+        roomType: roomType ? (roomType as RoomType) : undefined,
       };
 
       const results = await searchRoomsUseCase.execute(criteria);

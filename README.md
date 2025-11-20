@@ -394,6 +394,47 @@ npm run test
 npm run test:ui
 ```
 
+## Ejecutar Pruebas
+
+### Pruebas en modo watch (desarrollo)
+```bash
+yarn test
+```
+
+### Ejecutar todas las pruebas una vez
+```bash
+yarn test:run
+```
+
+### Ejecutar pruebas con cobertura
+```bash
+yarn test:coverage
+```
+
+### Ejecutar Vitest UI
+```bash
+yarn test:ui
+```
+
+## Estructura de Pruebas
+
+- `src/domain/usecases/__tests__/` - Pruebas unitarias de casos de uso
+- `src/infrastructure/repositories/__tests__/` - Pruebas de repositorios
+- `src/presentation/components/__tests__/` - Pruebas de componentes React
+- `src/presentation/pages/__tests__/` - Pruebas de páginas
+- `src/presentation/context/__tests__/` - Pruebas de contextos
+- `src/infrastructure/api/__tests__/` - Pruebas del cliente API
+
+## Cobertura de Pruebas
+
+Las pruebas cubren:
+- ✅ Use Cases (LoginUseCase, RegisterUseCase, SearchRoomsUseCase, CreateReservationUseCase)
+- ✅ Repositories (AuthRepositoryImpl, RoomRepositoryImpl, ReservationRepositoryImpl)
+- ✅ Componentes (Button, Input, Card, RoomCard, Loading, Modal)
+- ✅ Páginas (Login, Register, SearchRooms)
+- ✅ Contextos (AuthContext)
+- ✅ API Client
+
 ## Convenciones de Código
 
 - **TypeScript** estricto habilitado
@@ -456,3 +497,158 @@ cd frontend
 yarn dev
 ```
 
+## 🐳 Ejecución con Docker
+
+### Requisitos Previos para Docker
+- [Docker](https://www.docker.com/get-started) (v20.10 o superior)
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0 o superior)
+
+### Instalación y Configuración
+
+#### 1. Clonar el repositorio
+```bash
+git clone https://github.com/FernandoBlancoTFL/Hotel_reservation.git
+cd Hotel_reservation
+```
+
+#### 2. Configurar variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+```env
+# Database
+POSTGRES_USER=hotel_user
+POSTGRES_PASSWORD=hotel_password
+POSTGRES_DB=hotel_reservation
+DATABASE_URL=postgresql://hotel_user:hotel_password@postgres:5432/hotel_reservation
+
+# Backend
+PORT=3000
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+NODE_ENV=production
+
+# Frontend
+VITE_API_URL=http://localhost:3000
+```
+
+#### 3. Levantar todos los servicios
+```bash
+# Levantar en segundo plano (modo detached)
+docker compose up -d
+
+# O levantar viendo los logs en tiempo real
+docker compose up
+```
+
+Esto levantará tres servicios:
+- **PostgreSQL** en el puerto 5432
+- **Backend API** en http://localhost:3000
+- **Frontend** en http://localhost:5173
+
+#### 4. Verificar que los servicios están corriendo
+```bash
+docker compose ps
+```
+
+Deberías ver algo como:
+```
+NAME                IMAGE                           STATUS
+hotel_backend       hotel_reservation-backend       Up
+hotel_frontend      hotel_reservation-frontend      Up
+hotel_postgres      postgres:15-alpine              Up
+```
+
+#### 5. Ver logs de los servicios
+```bash
+# Ver logs de todos los servicios
+docker compose logs -f
+
+# Ver logs solo del backend
+docker compose logs -f backend
+
+# Ver logs solo del frontend
+docker compose logs -f frontend
+
+# Ver logs solo de la base de datos
+docker compose logs -f postgres
+```
+
+#### 6. Acceder a la aplicación
+
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:3000
+- **PostgreSQL:** localhost:5432
+
+### Comandos Útiles de Docker
+```bash
+# Detener todos los servicios (mantiene datos)
+docker compose down
+
+# Detener y eliminar volúmenes (borra la base de datos)
+docker compose down -v
+
+# Reconstruir servicios después de cambios en el código
+docker compose up --build
+
+# Reconstruir sin cache
+docker compose up --build --no-cache
+
+# Reiniciar un servicio específico
+docker compose restart backend
+
+# Ver estado de los servicios
+docker compose ps
+
+# Detener sin eliminar contenedores
+docker compose stop
+
+# Iniciar contenedores detenidos
+docker compose start
+
+# Ejecutar comando dentro del contenedor del backend
+docker compose exec backend sh
+
+# Ejecutar comando dentro del contenedor de postgres
+docker compose exec postgres psql -U hotel_user -d hotel_reservation
+```
+
+### Troubleshooting Docker
+
+Si tienes problemas:
+
+**1. Puerto ya en uso:**
+```bash
+# Verificar qué proceso usa el puerto 3000
+lsof -i :3000
+
+# O cambiar el puerto en docker-compose.yml
+```
+
+**2. Reconstruir todo desde cero:**
+```bash
+docker compose down -v --rmi all
+docker compose up --build
+```
+
+**3. Ver logs detallados:**
+```bash
+docker compose logs --tail=100 backend
+```
+
+**4. Limpiar recursos de Docker:**
+```bash
+# Eliminar contenedores detenidos
+docker container prune
+
+# Eliminar imágenes no utilizadas
+docker image prune
+
+# Eliminar volúmenes no utilizados
+docker volume prune
+```
+
+### Notas Importantes sobre Docker
+
+- El proyecto utiliza **npm workspaces** para gestionar el monorepo
+- Los **TypeScript paths** (`@hotel/domain`) se resuelven automáticamente mediante el script `fix-imports.js` durante el build
+- La base de datos PostgreSQL persiste los datos en un volumen Docker, por lo que los datos se mantienen entre reinicios
+- Para **borrar completamente la base de datos** usa: `docker compose down -v`

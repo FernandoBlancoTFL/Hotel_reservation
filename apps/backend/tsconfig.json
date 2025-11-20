@@ -2,10 +2,19 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "target": "ES2020",
+    "module": "commonjs",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "paths": {
+      "@hotel/domain/*": ["../../domain/src/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
   "references": [
     { "path": "../../domain" }
   ]

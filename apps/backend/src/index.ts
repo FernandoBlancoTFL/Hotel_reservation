@@ -1,13 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createAuthRoutes } from './presentation/routes/authRoutes';
-import { createRoomRoutes } from './presentation/routes/roomRoutes';
-import { createReservationRoutes } from './presentation/routes/reservationRoutes';
-import { InMemoryUserRepository } from './infrastructure/repositories/InMemoryUserRepository';
-import { InMemoryRoomRepository } from './infrastructure/repositories/InMemoryRoomRepository';
-import { InMemoryReservationRepository } from './infrastructure/repositories/InMemoryReservationRepository';
-import { errorHandler } from './presentation/middlewares/errorHandler';
+import { createDatabasePool, initializeDatabase } from './infrastructure/database/database';
+import { PostgresUserRepository } from './infrastructure/repositories/PostgresUserRepository';
+import { PostgresRoomRepository } from './infrastructure/repositories/PostgresRoomRepository';
+import { PostgresReservationRepository } from './infrastructure/repositories/PostgresReservationRepository';
+import { AuthController } from './presentation/controllers/AuthController';
+import { RoomController } from './presentation/controllers/RoomController';
+import { ReservationController } from './presentation/controllers/ReservationController';
+import { authMiddleware } from './presentation/middlewares/authMiddleware';
+import { roleMiddleware } from './presentation/middlewares/roleMiddleware';
+import { UserRole } from '@hotel/domain/src/entities/User';
 
 dotenv.config();
 
@@ -18,28 +21,61 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize repositories
-const userRepository = new InMemoryUserRepository();
-const roomRepository = new InMemoryRoomRepository();
-const reservationRepository = new InMemoryReservationRepository();
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Create database pool
+    const pool = createDatabasePool();
+    
+    // Initialize database tables
+    await initializeDatabase(pool);
+    console.log('Database connected and initialized');
 
-// Routes
-app.use('/api/auth', createAuthRoutes(userRepository));
-app.use('/api/rooms', createRoomRoutes(roomRepository, reservationRepository));
-app.use('/api/reservations', createReservationRoutes(roomRepository, reservationRepository, userRepository));
+    // Create repositories with PostgreSQL
+    const userRepository = new PostgresUserRepository(pool);
+    const roomRepository = new PostgresRoomRepository(pool);
+    const reservationRepository = new PostgresReservationRepository(pool);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+    // Create controllers
+    const authController = new AuthController(userRepository);
+    const roomController = new RoomController(roomRepository, reservationRepository);
+    const reservationController = new ReservationController(
+      roomRepository,
+      reservationRepository,
+      userRepository
+    );
 
-// Error handler (must be last)
-app.use(errorHandler);
+    // Health check
+    app.get('/health', (req, res) => {
+      res.status(200).json({ status: 'ok', message: 'Server is running' });
+    });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth: http://localhost:${PORT}/api/auth`);
-  console.log(`🏨 Rooms: http://localhost:${PORT}/api/rooms`);
-  console.log(`📅 Reservations: http://localhost:${PORT}/api/reservations`);
-});
+    // Auth routes
+    app.post('/api/auth/register', authController.register);
+    app.post('/api/auth/login', authController.login);
+
+    // Room routes
+    app.post('/api/rooms', authMiddleware, roleMiddleware([UserRole.RECEPTIONIST, UserRole.ADMIN]), roomController.create);
+    app.get('/api/rooms', roomController.getAll);
+    app.get('/api/rooms/search', roomController.searchAvailable);
+    app.get('/api/rooms/:id', roomController.getById);
+
+    // Reservation routes
+    app.post('/api/reservations', authMiddleware, reservationController.create);
+    app.get('/api/reservations/my-reservations', authMiddleware, reservationController.getMyReservations);
+    app.get('/api/reservations', authMiddleware, roleMiddleware([UserRole.RECEPTIONIST, UserRole.ADMIN]), reservationController.getAll);
+    app.post('/api/reservations/:id/cancel', authMiddleware, reservationController.cancel);
+    app.post('/api/reservations/:id/check-in', authMiddleware, roleMiddleware([UserRole.RECEPTIONIST, UserRole.ADMIN]), reservationController.checkIn);
+    app.post('/api/reservations/:id/check-out', authMiddleware, roleMiddleware([UserRole.RECEPTIONIST, UserRole.ADMIN]), reservationController.checkOut);
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
